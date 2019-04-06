@@ -28,5 +28,9 @@
             android:id="@+id/nav_pelanggan"
             android:icon="@drawable/ic_pelanggan"
             android:title="Pelanggan" />
+        <item
+            android:id="@+id/nav_logout"
+            android:icon="@drawable/ic_service"
+            android:title="Logout" />
     </group>
 </menu>

@@ -1,12 +1,17 @@
 package p3l.atmaauto;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
+import p3l.atmaauto.Controller.ApiClient;
+
+import p3l.atmaauto.Session.SessionManager;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -14,63 +19,117 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+
+import okhttp3.ResponseBody;
+
+
 public class SignActivity extends AppCompatActivity {
 
-    private EditText mUsername;
-    private EditText mName;
-    private EditText mPassword;
-    private Button mRegisterButton;
+    private Button button;
+    private Button signInBtn;
+    private TextView tError;
+    private EditText txtUsername, txtPassword;
+
+
+    SessionManager session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sign);
+        setContentView(R.layout.activity_login);
 
-        setAtribut();
-        mRegisterButton.setOnClickListener(new View.OnClickListener() {
+        session = new SessionManager(getApplicationContext());
+        if(session.isLoggedIn())
+        {
+            Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+            startActivity(intent);
+        }
+
+        init();
+        signInBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onClickRegister();
+                login();
             }
         });
     }
-    private void setAtribut(){
-        mUsername=findViewById(R.id.usernametxt);
-        mName=findViewById(R.id.nametxt);
-        mPassword=findViewById(R.id.passwordtxt);
-        mRegisterButton=findViewById(R.id.registerbtn);
+
+    private void init(){
+        signInBtn = (Button) findViewById(R.id.btnRegisterLogin);
+        txtUsername = (EditText)findViewById(R.id.eUsernameRegister);
+        txtPassword = (EditText)findViewById(R.id.ePasswordRegister);
+        tError = findViewById(R.id.tvErrorLogin);
+        tError.setText("");
     }
 
-    private void startIntent(){
-        Intent intent=new Intent(getApplicationContext(),LoginActivity.class);
+    public void openHome(){
+        Intent intent = new Intent(this, HomeActivity.class);
+        startActivity(intent);
     }
-    private void onClickRegister(){
-        if (mUsername.getText().toString().isEmpty() ||
-        mPassword.getText().toString().isEmpty()){
-            Toast.makeText(this,"Tidak boleh kosong",Toast.LENGTH_SHORT).show();
-        }else {
-            Retrofit.Builder builder=new Retrofit
-                    .Builder()
-                    .baseUrl("https://atmaauto.b-laundry.com/api/users")
-                    .addConverterFactory(GsonConverterFactory.create());
-            Retrofit retrofit=builder.build();
-            ApiClient apiClient=retrofit.create(ApiClient.class);
-            Call<String> userDaoCall=apiClient.regUser(mUsername.getText().toString(),
-                    mName.getText().toString(),
-                    mPassword.getText().toString());
-            userDaoCall.enqueue(new Callback<String>() {
+
+    public void login(){
+        if(txtUsername.getText().toString().isEmpty()||
+                txtPassword.getText().toString().isEmpty()){
+            tError.setText("Inputan Tidak Boleh Kosong");
+        }else{
+
+            final ProgressDialog progressDialog = new ProgressDialog(SignActivity.this);
+            progressDialog.setMessage("Authenticating...");
+            progressDialog.show();
+
+            Retrofit retrofit= new retrofit2.Retrofit.Builder()
+                    .baseUrl("http://atmaauto.b-laundry.com/api")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+
+            ApiClient apiClient = retrofit.create(ApiClient.class);
+//            Call<ResponseUser> call = apiUser.GetLogin(txtUsername.getText().toString(),txtPassword.getText().toString());
+            Call<ResponseBody> call = apiClient.GetLogin(txtUsername.getText().toString(), txtPassword.getText().toString());
+            call.enqueue(new Callback<ResponseBody>() {
                 @Override
-                public void onResponse(Call<String> call, Response<String> response) {
-                    Toast.makeText(SignActivity.this,"Success",Toast.LENGTH_SHORT).show();
-                    startIntent();
+                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                    try {
+                        JSONObject jsonRes = new JSONObject(response.body().string());
+                        Toast.makeText(getApplicationContext(), jsonRes.getJSONObject("data").getString("role"), Toast.LENGTH_SHORT).show();
+                        session.createLoginSessions(
+                                jsonRes.getJSONObject("data").getString("role"),
+                                jsonRes.getJSONObject("data").getString("username"), jsonRes.getJSONObject("data").getString("id"));
+                        final Intent intent = new Intent(SignActivity.this, HomeActivity.class);
+                        new android.os.Handler().postDelayed(
+                                new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(getApplicationContext(), "Berhasil Login", Toast.LENGTH_SHORT).show();
+                                        startActivity(intent);
+                                        progressDialog.dismiss();
+                                    }
+                                },3000);
+
+                    } catch (JSONException e){
+                        progressDialog.dismiss();
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        progressDialog.dismiss();
+                        e.printStackTrace();
+                    } catch (Throwable e){
+                        progressDialog.dismiss();
+                        tError.setText("Username dan Password tidak cocok");
+                    }
                 }
 
                 @Override
-                public void onFailure(Call<String> call, Throwable t) {
-                    Toast.makeText(SignActivity.this,"Gagal",Toast.LENGTH_SHORT).show();
+                public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    tError.setText("Koneksi Internet Tidak Stabil");
+                    progressDialog.dismiss();
+                    Toast.makeText(getApplicationContext(), "Internet err\n" + t.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             });
-
         }
+
     }
+
 }

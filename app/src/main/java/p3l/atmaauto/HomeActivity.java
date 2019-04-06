@@ -64,6 +64,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
                         new PelangganFragment()).commit();
                 break;
+            case R.id.nav_logout:
+                getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                        new LogoutFragment()).commit();
+                break;
+
         }
         drawer.closeDrawer(GravityCompat.START);
         return true;
