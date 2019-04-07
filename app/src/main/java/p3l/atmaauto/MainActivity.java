@@ -25,13 +25,5 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        btnSignIn = (Button) findViewById(R.id.signbtn);
-        btnSignIn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent i = new Intent(MainActivity.this,SignActivity.class);
-                startActivity(i);
-            }
-        });
     }
 }

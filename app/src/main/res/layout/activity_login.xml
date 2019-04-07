@@ -13,7 +13,9 @@
         android:paddingLeft="24dp"
         android:paddingRight="24dp">
 
-        <ImageView android:src="@drawable/logo_atmaauto"
+        <ImageView
+            android:id="@+id/logoAtmaAuto"
+            android:src="@drawable/logo_atmaauto"
             android:layout_width="wrap_content"
             android:layout_height="72dp"
             android:layout_marginBottom="24dp"
@@ -36,7 +38,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.51"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/imageView"
+            app:layout_constraintTop_toBottomOf="@+id/logoAtmaAuto"
             app:layout_constraintVertical_chainStyle="packed" />
 
         <com.rengwuxian.materialedittext.MaterialEditText
